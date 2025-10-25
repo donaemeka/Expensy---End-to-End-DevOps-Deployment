@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  # MongoDB Database - stores expenses permanently
+  mongodb:
+    image: mongo:latest
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME}  # From .env file
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}  # From .env file
+    ports:
+      - "127.0.0.1:27017:27017"  # 🔒 Safe: Only accessible from your computer
+
+  # Redis Cache 
+  redis:
+    image: redis:alpine
+    command: redis-server --requirepass ${REDIS_PASSWORD}  # Redis password from .env
+    ports:
+      - "127.0.0.1:6379:6379"  # 🔒 Safe: Only accessible from your computer
+
+  # Backend API - the brain that handles data
+  backend:
+    build: ./expensy_backend
+    ports:
+      - "${BACKEND_PORT}:${BACKEND_PORT}"  # Backend API port from .env
+    environment:
+      DATABASE_URI: mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@mongodb:27017/${MONGO_DATABASE}
+      REDIS_HOST: redis    # Uses Docker service name
+      REDIS_PORT: 6379     # Redis default port
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    depends_on:
+      - mongodb  # Wait for database to start first
+      - redis    # Wait for Redis to start first
+
+  # Frontend Web Application 
+  frontend:
+    build: ./expensy_frontend  
+    ports:
+      - "3000:3000"  # Website accessible on port 3000
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:${BACKEND_PORT}  # Points to backend
+    depends_on:
+      - backend  # Wait for backend to start first

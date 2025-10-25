@@ -1,0 +1,66 @@
+
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]  
+  pull_request:
+    branches: [ main ]  # Run when someone creates a pull request
+
+jobs:
+  # Job 1: Build and Test the application
+  build-and-test:
+    runs-on: ubuntu-latest  # Use Ubuntu machine
+    
+    steps:
+    # Step 1: Get the code from GitHub
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    # Step 2: Build Docker images
+    - name: Build Docker images
+      run: |
+        docker build -t expensy-backend ./expensy_backend
+        docker build -t expensy-frontend ./expensy_frontend
+        
+    # Step 3: Test if containers can start
+    - name: Test containers
+      run: |
+        docker run -d --name test-backend expensy-backend
+        docker run -d --name test-frontend expensy-frontend
+        sleep 10
+        docker ps  # Show running containers
+        docker stop test-backend test-frontend
+
+  # Job 2: Deploy to Docker Hub 
+  deploy:
+    needs: build-and-test  # Wait for build-and-test to finish
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'  # Only deploy from main branch
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    # Step 1: Login to Docker Hub (where we store containers)
+    - name: Login to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}   
+        password: ${{ secrets.DOCKER_PASSWORD }}   
+        
+    # Step 2: Build and push Backend container
+    - name: Build and push Backend
+      uses: docker/build-push-action@v4
+      with:
+        context: ./expensy_backend  # Backend folder
+        push: true  # Push to Docker Hub
+        tags: ${{ secrets.DOCKER_USERNAME }}/expensy-backend:latest
+        
+    # Step 3: Build and push Frontend container  
+    - name: Build and push Frontend
+      uses: docker/build-push-action@v4
+      with:
+        context: ./expensy_frontend  # Frontend folder
+        push: true  # Push to Docker Hub
+        tags: ${{ secrets.DOCKER_USERNAME }}/expensy-frontend:latest
