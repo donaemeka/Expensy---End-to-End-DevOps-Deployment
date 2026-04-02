@@ -19,7 +19,7 @@ spec:
             - containerPort: 3000   # Frontend runs on port 3000
           env:
             - name: NEXT_PUBLIC_API_URL
-              vvalue: "http://ae2795fa33fc945ff8dad2b6d2875712-833512284.eu-west-2.elb.amazonaws.com:8706"
+              value: "http://ae2795fa33fc945ff8dad2b6d2875712-833512284.eu-west-2.elb.amazonaws.com:8706"
 ---
 apiVersion: v1
 kind: Service
