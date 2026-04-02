@@ -25,14 +25,14 @@ jobs:
         with:
           context: ./expensy_backend
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/expensy-backend:latest
+          tags: ${{ secrets.DOCKER_USERNAME }}/donaemeka/expensy-backend:latest
 
       - name: Build and push frontend image
         uses: docker/build-push-action@v5
         with:
           context: ./expensy_frontend
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/expensy-frontend:latest
+          tags: ${{ secrets.DOCKER_USERNAME }}/donaemeka/expensy-frontend:latest
 
   deploy-to-eks:
     needs: build-and-push
